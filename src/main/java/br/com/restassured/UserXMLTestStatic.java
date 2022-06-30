@@ -1,42 +1,69 @@
 package br.com.restassured;
 
 import io.restassured.RestAssured;
+import io.restassured.builder.RequestSpecBuilder;
+import io.restassured.builder.ResponseSpecBuilder;
+import io.restassured.filter.log.LogDetail;
 import io.restassured.internal.path.xml.NodeImpl;
-import org.hamcrest.Matchers;
+import io.restassured.specification.RequestSpecification;
+import io.restassured.specification.ResponseSpecification;
 import org.junit.Assert;
+import org.junit.BeforeClass;
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 
 import java.util.ArrayList;
 
-import static io.restassured.RestAssured.*;
+import static io.restassured.RestAssured.given;
+import static io.restassured.RestAssured.responseSpecification;
 import static org.hamcrest.Matchers.*;
 
 
-public class UserXMLTest {
+public class UserXMLTestStatic {
+    //definição de propriedades:
+    public static RequestSpecification reqSpec;
+    public static ResponseSpecification respSpec;
+
+    //anotação de configuração antes da criação da classe
+    @BeforeAll
+    public static void setup() {
+        RestAssured.baseURI = "https://restapi.wcaquino.me";
+//        RestAssured.port = 443; // (opcional)
+//        RestAssured.basePath = ("");
+
+        //variáreis globais
+        RestAssured.requestSpecification = reqSpec; //permitem tirar o .spec(reqSpec)
+        RestAssured.responseSpecification = respSpec;
+
+        /*Pode-se ter especificações(parâmetros) a nível de request: given(), when();
+        e à nivel de response: then()*/
+        RequestSpecBuilder reqBuilder = new RequestSpecBuilder();
+        reqBuilder.log(LogDetail.ALL); //configurações prédefinidas de request
+        //Logo após, transformar esse builder em uma requisição de verdade:
+        reqSpec = reqBuilder.build();// reqBuilder.build() + alt + enter -> criação de variável local
+
+        ResponseSpecBuilder respBuilder = new ResponseSpecBuilder();
+        respBuilder.expectStatusCode(200);
+        respSpec = respBuilder.build();
+
+
+    }
 
     @Test
     public void devoTrabalharComXML() {
         given()
-                .when()
-                .get("https://restapi.wcaquino.me/usersXML/3")
-                .then()
-                .statusCode(200)
-                .body("user.name", is("Ana Julia"))
-                //A diferença com o Json é que o XML possui atributos
-                .body("user.@id", is("3")) //XMLtodo valor é string
-                .body("user.filhos.name.size()", is(2))
-                .body("user.filhos.name[0]", is("Zezinho"))
-                //Testando coleção
-                .body("user.filhos.name", hasItem("Zezinho"))
-                .body("user.filhos.name", hasItems("Zezinho", "Luizinho"))
+        .when()
+            .get("/usersXML/3") //recursos
+        .then()
         ;
     }
+
 
     @Test
     public void devoTrabalharComXMLRootPath() {
         given()
                 .when()
-                .get("https://restapi.wcaquino.me/usersXML/3")
+                .get("/usersXML/3")
                 .then()
                 .statusCode(200)
                 .rootPath("user")
@@ -64,7 +91,7 @@ public class UserXMLTest {
     public void devoFazerPesquisasAvançadasComXML() {
         given()
                 .when()
-                .get("https://restapi.wcaquino.me/usersXML")
+                .get("/usersXML")
                 .then()
                 .statusCode(200)
                 .body("users.user.size()", is(3))
@@ -96,7 +123,7 @@ public class UserXMLTest {
     public void devoFazerPesquisasAvançadasComXMLComJava() {
         Object nome = given()
                 .when()
-                .get("https://restapi.wcaquino.me/usersXML")
+                .get("/usersXML")
                 .then()
                 .statusCode(200)
                 .extract().path("users.user.name.findAll{it.toString().startsWith('Maria')}")
@@ -117,7 +144,7 @@ public class UserXMLTest {
     public void devoFazerPesquisasAvançadasComXMLComJavaColeção() {
         ArrayList<NodeImpl> nomes = given()
                 .when()
-                .get("https://restapi.wcaquino.me/usersXML")
+                .get("/usersXML")
                 .then()
                 .statusCode(200)
                 .extract().path("users.user.name.findAll{it.toString().contains('n')}");
@@ -133,7 +160,7 @@ public class UserXMLTest {
     public void devoFazerPesquisasAvançadasComXPath() {
             given()
             .when()
-                .get("https://restapi.wcaquino.me/usersXML")
+                .get("/usersXML")
             .then()
                 .statusCode(200)
                 //count() -> método do xpath
